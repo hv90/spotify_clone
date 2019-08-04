@@ -12,9 +12,12 @@ var request = require('request'); // "Request" library
 var cors = require('cors');
 var querystring = require('querystring');
 var cookieParser = require('cookie-parser');
+var filename = './myData.json'
+var myData = require(filename)
+var fs = require('fs')
 
-var client_id = ''; // Your client id
-var client_secret = ''; // Your secret
+var client_id = myData.client_id; // Your client id
+var client_secret = myData.client_secret; // Your secret
 var redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
 
 /**
@@ -98,17 +101,21 @@ app.get('/callback', function(req, res) {
           json: true
         };
 
-        // use the access token to access the Spotify Web API
+        // Hiding private data from Spotify Web API and writing it to myData.json
         request.get(options, function(error, response, body) {
-          console.log(body);
+          myData.user_id = body['id'];
+          myData.access_token = access_token
+          myData.refresh_token = refresh_token
+          fs.writeFile(filename, JSON.stringify(myData, null, 2), (err) => {
+            if(err) 
+                throw err;
+          })
         });
 
-        // we can also pass the token to the browser to make requests from there
-        res.redirect('/#' +
-          querystring.stringify({
-            access_token: access_token,
-            refresh_token: refresh_token
-          }));
+        // Finished!
+        res.send('logged in with success');
+
+        
 
       } else {
         res.redirect('/#' +
@@ -119,6 +126,8 @@ app.get('/callback', function(req, res) {
     });
   }
 });
+
+
 
 
 
@@ -145,6 +154,8 @@ app.get('/refresh_token', function(req, res) {
     }
   });
 });
+
+
 
 
 
