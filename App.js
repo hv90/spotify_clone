@@ -15,6 +15,7 @@ var cookieParser = require('cookie-parser');
 var filename = './myData.json'
 var myData = require(filename)
 var fs = require('fs')
+var tools = require("./tools.js")
 
 var client_id = myData.client_id; // Your client id
 var client_secret = myData.client_secret; // Your secret
@@ -127,9 +128,42 @@ app.get('/callback', function(req, res) {
   }
 });
 
+app.get('/playlists', (req, res) =>{
+  var access_token = myData.access_token
+  var OAuth = {
+    url: 'https://api.spotify.com/v1/me/playlists',
+    headers: { 'Authorization': 'Bearer ' + access_token }
+  }
+   request.get(OAuth, (err, response, body) =>{
+    res.send(response["statusMessage"])
+    fs.writeFile("pl.json", body, err =>{
+      if(err) throw err
+    })    
+  })  
+})
 
+app.get('/playlist', (req, res)=>{
+  
+  var data = tools.get_pl_info("./pl.json", 2)
+  
+  var access_token = myData.access_token
 
+  var OAuth = {
+    url: 'https://api.spotify.com/v1/playlists/' + data["id"] + '/tracks',
+    headers: { 'Authorization': 'Bearer ' + access_token }
+  }
+  
+  request.get(OAuth, (err, response, body)=>{
+    res.send(body)
+    var filename = "playlists\\"
+    filename += data["name"]
+    filename += ".json"
 
+    fs.writeFile(filename, body, err=>{
+      if (err) throw err
+    })    
+  })
+}) 
 
 app.get('/refresh_token', function(req, res) {
 
@@ -154,9 +188,5 @@ app.get('/refresh_token', function(req, res) {
     }
   });
 });
-
-
-
-
 
 app.listen(8888, console.log('Listening on 8888'));
