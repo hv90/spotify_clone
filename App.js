@@ -143,27 +143,57 @@ app.get('/playlists', (req, res) =>{
 })
 
 app.get('/playlist', (req, res)=>{
-  
-  var data = tools.get_pl_info("./pl.json", 2)
+ 
+  var playlist = tools.get_pl_info("./pl.json", 3)
   
   var access_token = myData.access_token
 
   var OAuth = {
-    url: 'https://api.spotify.com/v1/playlists/' + data["id"] + '/tracks',
+    url: 'https://api.spotify.com/v1/playlists/' + playlist["id"] + '/tracks',
     headers: { 'Authorization': 'Bearer ' + access_token }
   }
   
   request.get(OAuth, (err, response, body)=>{
     res.send(body)
     var filename = "playlists\\"
-    filename += data["name"]
+    filename += playlist["name"]
     filename += ".json"
 
     fs.writeFile(filename, body, err=>{
       if (err) throw err
     })    
   })
-}) 
+})
+
+app.delete('/playlist', (req, res) =>{
+  var access_token = myData.access_token
+
+  var playlist = tools.get_pl_info("./pl.json", 3)
+
+  var tracks = tools.repeatedFilesFinder(".//playlists//Blue Pumpkins.json", ".//playlists//Purple Pumpkins.json")
+  
+  //res.send(tracks)
+  
+  var OAuth = {
+    url: 	'https://api.spotify.com/v1/playlists/' + playlist["id"] + '/tracks',
+    headers: { 
+              'Authorization': 'Bearer ' + access_token,
+              'Content-Type': "application/json"
+            },
+    
+      tracks: [
+        {"uri":"spotify:track:6ZzWX5PGg5yoJUAWGPW5gN"},
+        {"uri":"spotify:track:2WJ2PMGcY7zJgtiXHiEB58"}
+      ]
+      
+    
+    
+  }
+
+  request.delete(OAuth, (err, response, body)=>{
+    console.log(body)
+  })
+})
 
 app.get('/refresh_token', function(req, res) {
 
