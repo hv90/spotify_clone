@@ -12,10 +12,15 @@ var request = require('request'); // "Request" library
 var cors = require('cors');
 var querystring = require('querystring');
 var cookieParser = require('cookie-parser');
+
 var filename = './myData.json'
 var myData = require(filename)
 var fs = require('fs')
 var tools = require("./tools.js")
+var morgan = require('morgan')
+var bodyParser = require('body-parser')
+var https = require('https')
+var axios = require('axios')
 
 var client_id = myData.client_id; // Your client id
 var client_secret = myData.client_secret; // Your secret
@@ -38,11 +43,15 @@ var generateRandomString = function(length) {
 
 var stateKey = 'spotify_auth_state';
 
+var options = {inflate: true}
+
 var app = express();
 
 app.use(express.static(__dirname + '/public'))
    .use(cors())
-   .use(cookieParser());
+   .use(cookieParser())
+   .use(bodyParser.json(options))
+   .use(morgan("combined"));
 
 app.get('/login', function(req, res) {
 
@@ -50,7 +59,7 @@ app.get('/login', function(req, res) {
   res.cookie(stateKey, state);
 
   // your application requests authorization
-  var scope = 'user-library-read user-library-modify';
+  var scope = 'user-library-read user-library-modify playlist-modify-private playlist-modify-public';
   res.redirect('https://accounts.spotify.com/authorize?' +
     querystring.stringify({
       response_type: 'code',
@@ -114,7 +123,7 @@ app.get('/callback', function(req, res) {
         });
 
         // Finished!
-        res.send('logged in with success');
+        res.send('Tudo certo!');
 
         
 
@@ -170,30 +179,33 @@ app.delete('/playlist', (req, res) =>{
 
   var playlist = tools.get_pl_info("./pl.json", 3)
 
-  var tracks = tools.repeatedFilesFinder(".//playlists//Blue Pumpkins.json", ".//playlists//Purple Pumpkins.json")
+  var tracks = tools.repeatedFilesFinder(".//playlists//Blue Pumpkins.json", ".//playlists//Yellow Pumpkins.json")
+  
   
   //res.send(tracks)
-  
-  var OAuth = {
-    url: 	'https://api.spotify.com/v1/playlists/' + playlist["id"] + '/tracks',
-    headers: { 
-              'Authorization': 'Bearer ' + access_token,
-              'Content-Type': "application/json"
-            },
-    
-      tracks: [
-        {"uri":"spotify:track:6ZzWX5PGg5yoJUAWGPW5gN"},
-        {"uri":"spotify:track:2WJ2PMGcY7zJgtiXHiEB58"}
-      ]
-      
-    
-    
-  }
 
-  request.delete(OAuth, (err, response, body)=>{
-    console.log(body)
+  var OAuth = {
+    method: 'DELETE',
+    url: 'https://api.spotify.com/v1/playlists/5itlyacAwd45riHjZxJz78/tracks',
+    headers: { 'Authorization': 'Bearer ' + access_token, "Content-Type": "application/json"},
+    
+    json: true,
+    body: {
+     tracks: tracks
+    } 
+  }
+//   curl -X DELETE -i -H "Authorization: Bearer BQDSBAWyClP_fucilm7LWnY4x_lX1FFXF50KML2J_w7NFw4HK1ycmlIdruolDfRxucHkFR5LOq5C_m9oZdcZcZHA0yElNzxjSA_jDBSa0q0CBfZBwvwhCK2Nlaa9_Epifinl7TBI2I4Hvef-ZkntMs73hAuy47VeCwTgfbpkhnWpgj1lT6UYjmrG7T1Ip_AhDPtF-O8KRIbBzr03y4XQcrCng42-Qi0mAGH59aOLyPimlB4rzA"  -H "Content-Type: application/json" "https://api.spotify.com/v1/playlists/5itlyacAwd45riHjZxJz78/tracks" --data "{\"tracks\":[{\"uri\": \"spotify:track:6ZzWX5PGg5yoJUAWGPW5gN\"}]}"
+
+  request(OAuth, (err, response, body)=>{
+    if(err) {
+      console.log("deu erro")
+      res.send(err)
+    }
+    res.send(body)
   })
+
 })
+
 
 app.get('/refresh_token', function(req, res) {
 
@@ -219,4 +231,8 @@ app.get('/refresh_token', function(req, res) {
   });
 });
 
+
+
+
 app.listen(8888, console.log('Listening on 8888'));
+

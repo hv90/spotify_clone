@@ -40,10 +40,9 @@ function repeatedFilesFinder(path1, path2){
     for( var j = 0; j < B["items"].length; j++){
       if(A["items"][i]["track"]["id"] == B["items"][j]["track"]["id"]){
         data = {
-          "uri": A["items"][j]["track"]["uri"],
-          "positions": [j]
+          "uri": A["items"][i]["track"]["uri"]
         }
-        
+        console.log(A["items"][i]["track"]["name"])
         result.push(data)
       }
     }
@@ -56,3 +55,5 @@ function repeatedFilesFinder(path1, path2){
   
   
 module.exports = {get_pl_info, get_multi_pl_info, repeatedFilesFinder}
+
+
