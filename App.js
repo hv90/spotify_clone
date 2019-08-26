@@ -137,6 +137,41 @@ app.get('/callback', function(req, res) {
   }
 });
 
+app.get("/artists", (req, res) =>{
+  var access_token = myData.access_token
+ 
+  rabson = {"info" : []}
+  i = 0
+  j = 0
+  const limit = 5849
+  while(i < limit){
+    OAuth = {
+      //url: 'http://localhost:8888/teste',
+      url: 'https://api.spotify.com/v1/me/tracks?limit=50&offset=' + i,
+      headers: { 'Authorization': 'Bearer ' + access_token }
+    }
+    
+    request.get(OAuth, (err, response, body)=>{
+      if(err) console.log(err)
+
+      results = JSON.parse(body)
+      
+      results.items.forEach(tracks => {
+        tracks.track.artists.forEach(artist =>{
+            //++i
+            json = {"artist" : artist.name, "name" : tracks.track.name, "uri" : tracks.track.uri, "n": ++i}
+           rabson["info"].push(json)
+           fs.writeFile("./artists.json", JSON.stringify(rabson), err => {if (err) throw err})
+        })
+      })  
+          
+    })
+    i += 50
+  }
+  res.send('ok')
+
+})
+
 app.get('/playlists', (req, res) =>{
   var access_token = myData.access_token
   var OAuth = {
@@ -145,11 +180,21 @@ app.get('/playlists', (req, res) =>{
   }
    request.get(OAuth, (err, response, body) =>{
     res.send(response["statusMessage"])
-    fs.writeFile("pl.json", body, err =>{
+    
+    results = JSON.parse(body)
+    playlists = {"playlists" : []}
+    results.items.forEach(element => {
+      json = {"pl_name" : element["name"], "pl_id" : element["id"]}
+      playlists["playlists"].push(json)
+    });
+    
+    fs.writeFile("./pl.json", JSON.stringify(playlists), err =>{
       if(err) throw err
-    })    
+    })
+
   })  
 })
+
 
 app.get('/playlist', (req, res)=>{
  
